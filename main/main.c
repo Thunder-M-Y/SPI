@@ -250,7 +250,7 @@ static void task_spi_master_entry(void *params)
 {
     spi_master_init();
 
-    xEventGroupSync(ready, 1, 3, portMAX_DELAY);
+    xEventGroupSync(ready, 1, 3, portMAX_DELAY);//数值1对应于二进制1，表示要设置第一位。数值3对应于二进制11，表示等待第一位和第二位都被设置。
     // 开始收发消息
     // vTaskDelay(1);  // 等等从机
     ESP_LOGI(MASTER, "Start transmitting data...");
