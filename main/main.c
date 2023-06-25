@@ -305,7 +305,7 @@ static void task_spi_slave_entry(void *params)
 void app_main(void)
 {
     ready = xEventGroupCreate();
-    // xTaskCreatePinnedToCore(task_spi_slave_entry, "Slave", 10240, NULL, 1, NULL, 1);
+    // xTaskCreatePinnedToCore(task_spi_slave_entry, "Slave", 10240, NULL, 1, NULL, 1);    //指定核心
     // xTaskCreatePinnedToCore(task_spi_master_entry, "Master", 10240, NULL, 1, NULL, 0);
     xTaskCreate(task_spi_slave_entry, "Slave", 10240, NULL, 1, NULL);
     xTaskCreate(task_spi_master_entry, "Master", 10240, NULL, 1, NULL);
