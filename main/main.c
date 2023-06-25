@@ -292,7 +292,7 @@ static void task_spi_slave_entry(void *params)
 {
     spi_slave_init();
 
-    xEventGroupSync(ready, 2, 3, portMAX_DELAY);         //事件组
+    xEventGroupSync(ready, 2, 3, portMAX_DELAY);         //数值2对应于二进制10，表示要设置第二位。数值3对应于二进制11，表示等待第一位和第二位都被设置。
     // 开始收发消息
     ESP_LOGI(SLAVE, "Start transmitting data..."); 
     while (1) 
