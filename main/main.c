@@ -48,7 +48,7 @@ void master_transaction()
     char read_buffer[BUFFER_SIZE + 1];
     sprintf(send_buffer, "I'm master(%d)", m_index++);
     spi_transaction_t t = {
-        .length = sizeof(send_buffer) * 8, // 长度大小是按位计算的，所以要 *8
+        .length = sizeof(send_buffer) * 8, // 长度大小是按位计算的，所以要 *8     sizeof求出send_buffer的字节大小(char)，一个字节8位
         .tx_buffer = send_buffer,          // 发送缓冲区
         .rx_buffer = read_buffer,          // 读取缓冲区
     };
