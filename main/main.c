@@ -31,7 +31,7 @@
 EventGroupHandle_t ready = NULL; // 等待双方都准备好的时间句柄
 spi_device_handle_t master_dev;  // 设备句柄
 
-#define EXAMPLE 1
+#define EXAMPLE 2
 #if EXAMPLE == 1
 
 /*
@@ -48,6 +48,7 @@ void master_transaction()
     char read_buffer[BUFFER_SIZE + 1];
     sprintf(send_buffer, "I'm master(%d)", m_index++);
     spi_transaction_t t = {
+        // sizeof，用于获取操作数被分配的内存空间，以字节单位表示。
         .length = sizeof(send_buffer) * 8, // 长度大小是按位计算的，所以要 *8     sizeof求出send_buffer的字节大小(char)，一个字节8位
         .tx_buffer = send_buffer,          // 发送缓冲区
         .rx_buffer = read_buffer,          // 读取缓冲区
@@ -55,7 +56,7 @@ void master_transaction()
     // 发送数据
     esp_err_t res = spi_device_transmit(master_dev, &t);
     if (res == ESP_OK)
-    {
+    {                                 // 0~20
         read_buffer[BUFFER_SIZE] = 0; // 强制结束符
         ESP_LOGE(MASTER, "发送成功 : %s", send_buffer);
         ESP_LOGE(MASTER, "接收成功 : %s", read_buffer);
@@ -68,6 +69,8 @@ void master_transaction()
 
 void slave_transaction()
 {
+    // size_t 是 C 语言中的一种数据类型，用于表示对象的大小（以字节为单位）或数组的索引。它是一种无符号整数类型，在不同的编译器和平台上可能具有不同的大小。
+    // size_t 通常用于表示内存分配、数组长度和循环计数等方面。它提供了足够大的位数，以容纳目标平台上可能的最大对象大小。
     const size_t BUFFER_SIZE = 20;
     char send_buffer[BUFFER_SIZE];
     char read_buffer[BUFFER_SIZE + 1];
@@ -124,8 +127,7 @@ void master_transaction()
     t.tx_buffer = NULL; // 不发送任何数据
     t.rx_buffer = NULL; // 不接收任何数据
     esp_err_t res = spi_slave_transmit(SPI_SLAVE, &t, portMAX_DELAY);
-    //if(res =ESP_OK)
-     
+    // if(res =ESP_OK)
 }
 
 void slave_transaction()
@@ -170,7 +172,7 @@ void master_transaction()
     };
     // 发送数据
     esp_err_t res = spi_device_transmit(master_dev, &t);
-    if (res == ESP_OK) 
+    if (res == ESP_OK)
     {
         read_buffer[BUFFER_SIZE] = 0; // 强制结束符
         ESP_LOGE(MASTER, "发送成功 : %s", send_buffer);
@@ -207,7 +209,6 @@ void slave_transaction()
     }
 }
 #endif
- 
 
 /**
  * @brief SPI 主机初始化
@@ -225,14 +226,21 @@ static void spi_master_init()
     // 配置设备参数
     spi_device_interface_config_t dev_cfg = {
         .command_bits = 0,
-        .address_bits = 0,
+#if EXAMPLE == 1
+        .address_bits = 0, // 修改这个参数看看效果
+#elif EXAMPLE == 2
+        .address_bits = 8, // 包含 1个字节的寄存器地址
+#elif EXAMPLE == 3
+        .address_bits = 8, // 包含 1个字节的寄存器地址
+#endif
         .dummy_bits = 0,
-        .clock_speed_hz = CLOCK_SPEED, 
-        .duty_cycle_pos = 128, 
-        .mode = 0, 
-        .spics_io_num = GPIO_MASTER_CS, 
-        .cs_ena_posttrans = 3, 
-        .queue_size = 7}; 
+        .clock_speed_hz = CLOCK_SPEED,
+        .duty_cycle_pos = 128,
+        .mode = 0,
+        .spics_io_num = GPIO_MASTER_CS,
+        .cs_ena_posttrans = 3,
+        .queue_size = 7
+    };
 
     // 总线初始化，DMA 还没学，先不用
     ESP_ERROR_CHECK(spi_bus_initialize(SPI_MASTER, &bus_cfg, SPI_DMA_DISABLED));
@@ -250,7 +258,7 @@ static void task_spi_master_entry(void *params)
 {
     spi_master_init();
 
-    xEventGroupSync(ready, 1, 3, portMAX_DELAY);//数值1对应于二进制1，表示要设置第一位。数值3对应于二进制11，表示等待第一位和第二位都被设置。
+    xEventGroupSync(ready, 1, 3, portMAX_DELAY); // 数值1对应于二进制1，表示要设置第一位。数值3对应于二进制11，表示等待第一位和第二位都被设置。
     // 开始收发消息
     // vTaskDelay(1);  // 等等从机
     ESP_LOGI(MASTER, "Start transmitting data...");
@@ -292,12 +300,12 @@ static void task_spi_slave_entry(void *params)
 {
     spi_slave_init();
 
-    xEventGroupSync(ready, 2, 3, portMAX_DELAY);         //数值2对应于二进制10，表示要设置第二位。数值3对应于二进制11，表示等待第一位和第二位都被设置。
+    xEventGroupSync(ready, 2, 3, portMAX_DELAY); // 数值2对应于二进制10，表示要设置第二位。数值3对应于二进制11，表示等待第一位和第二位都被设置。
     // 开始收发消息
-    ESP_LOGI(SLAVE, "Start transmitting data..."); 
-    while (1) 
-    { 
-        slave_transaction(); 
+    ESP_LOGI(SLAVE, "Start transmitting data...");
+    while (1)
+    {
+        slave_transaction();
         // vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
